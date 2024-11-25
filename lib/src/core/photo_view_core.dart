@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:octo_image/octo_image.dart';
 import 'package:photo_view/photo_view.dart'
     show
         PhotoViewScaleState,
@@ -43,6 +44,7 @@ class PhotoViewCore extends StatefulWidget {
     required this.disableGestures,
     required this.enablePanAlways,
     required this.strictScale,
+    required this.placeholderBuilder,
   })  : customChild = null,
         super(key: key);
 
@@ -66,6 +68,7 @@ class PhotoViewCore extends StatefulWidget {
     required this.disableGestures,
     required this.enablePanAlways,
     required this.strictScale,
+    required this.placeholderBuilder,
   })  : imageProvider = null,
         semanticLabel = null,
         gaplessPlayback = false,
@@ -95,6 +98,8 @@ class PhotoViewCore extends StatefulWidget {
   final bool enablePanAlways;
   final bool strictScale;
 
+  final WidgetBuilder? placeholderBuilder;
+
   final FilterQuality filterQuality;
 
   @override
@@ -113,6 +118,7 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   Offset? _normalizedPosition;
   double? _scaleBefore;
   double? _rotationBefore;
+  bool _firstTime = true;
 
   late final AnimationController _scaleAnimationController;
   Animation<double>? _scaleAnimation;
@@ -141,6 +147,7 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   }
 
   void onScaleStart(ScaleStartDetails details) {
+    _firstTime = false;
     _rotationBefore = controller.rotation;
     _scaleBefore = scale;
     _normalizedPosition = details.focalPoint - controller.position;
@@ -316,11 +323,23 @@ class PhotoViewCoreState extends State<PhotoViewCore>
           AsyncSnapshot<PhotoViewControllerValue> snapshot,
         ) {
           if (snapshot.hasData) {
-            final PhotoViewControllerValue value = snapshot.data!;
+            PhotoViewControllerValue value = snapshot.data!;
             final useImageScale = widget.filterQuality != FilterQuality.none;
-
+            if (_firstTime && scaleBoundaries.isLongImage) {
+              final cornersY = this.cornersY(scale: scale);
+              final offset = Offset(0, cornersY.max);
+              value = PhotoViewControllerValue(
+                position: offset,
+                scale: scale,
+                rotation: value.rotation,
+                rotationFocusPoint: value.rotationFocusPoint,
+              );
+              controller.position = offset;
+            }
+            debugPrint(
+              'PhotoViewCore.build: ${scaleBoundaries.childSize.height}, ${scaleBoundaries.outerSize.height}',
+            );
             final computedScale = useImageScale ? 1.0 : scale;
-
             final matrix = Matrix4.identity()
               ..translate(value.position.dx, value.position.dy)
               ..scale(computedScale)
@@ -389,13 +408,13 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   Widget _buildChild() {
     return widget.hasCustomChild
         ? widget.customChild!
-        : Image(
+        : OctoImage(
             image: widget.imageProvider!,
-            semanticLabel: widget.semanticLabel,
             gaplessPlayback: widget.gaplessPlayback ?? false,
             filterQuality: widget.filterQuality,
             width: scaleBoundaries.childSize.width * scale,
             fit: BoxFit.contain,
+            placeholderBuilder: widget.placeholderBuilder,
           );
   }
 }

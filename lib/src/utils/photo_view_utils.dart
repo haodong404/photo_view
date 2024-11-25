@@ -27,12 +27,14 @@ double getScaleForScaleState(
 /// Internal class to wraps custom scale boundaries (min, max and initial)
 /// Also, stores values regarding the two sizes: the container and teh child.
 class ScaleBoundaries {
+  
   const ScaleBoundaries(
     this._minScale,
     this._maxScale,
     this._initialScale,
     this.outerSize,
     this.childSize,
+    this.devicePixelRatio,
   );
 
   final dynamic _minScale;
@@ -40,6 +42,7 @@ class ScaleBoundaries {
   final dynamic _initialScale;
   final Size outerSize;
   final Size childSize;
+  final double devicePixelRatio;
 
   double get minScale {
     assert(_minScale is double || _minScale is PhotoViewComputedScale);
@@ -51,6 +54,11 @@ class ScaleBoundaries {
       return _scaleForCovering(outerSize, childSize) *
           (_minScale as PhotoViewComputedScale).multiplier; // ignore: avoid_as
     }
+
+    if (_minScale == PhotoViewComputedScale.fitWidth) {
+      return (outerSize.width / childSize.width) * _minScale.multiplier;
+    }
+
     assert(_minScale >= 0.0);
     return _minScale;
   }
@@ -69,6 +77,11 @@ class ScaleBoundaries {
                   .multiplier)
           .clamp(minScale, double.infinity);
     }
+
+    if (_maxScale == PhotoViewComputedScale.fitWidth) {
+      return ((outerSize.width / childSize.width) * _maxScale.multiplier)
+          .clamp(minScale, double.infinity);
+    }
     return _maxScale.clamp(minScale, double.infinity);
   }
 
@@ -84,8 +97,13 @@ class ScaleBoundaries {
           (_initialScale as PhotoViewComputedScale) // ignore: avoid_as
               .multiplier;
     }
+    if (_initialScale == PhotoViewComputedScale.fitWidth) {
+      return (outerSize.width / childSize.width) * _initialScale.multiplier;
+    }
     return _initialScale.clamp(minScale, maxScale);
   }
+
+  bool get isLongImage => (childSize.height / devicePixelRatio) > outerSize.height;
 
   @override
   bool operator ==(Object other) =>

@@ -34,6 +34,7 @@ class ImageWrapper extends StatefulWidget {
     required this.errorBuilder,
     required this.enablePanAlways,
     required this.strictScale,
+    required this.placeholderBuilder,
   }) : super(key: key);
 
   final ImageProvider imageProvider;
@@ -62,6 +63,7 @@ class ImageWrapper extends StatefulWidget {
   final bool? disableGestures;
   final bool? enablePanAlways;
   final bool? strictScale;
+  final WidgetBuilder? placeholderBuilder;
 
   @override
   _ImageWrapperState createState() => _ImageWrapperState();
@@ -100,7 +102,7 @@ class _ImageWrapperState extends State<ImageWrapper> {
   // retrieve image from the provider
   void _resolveImage() {
     final ImageStream newStream = widget.imageProvider.resolve(
-      const ImageConfiguration(),
+      const ImageConfiguration(devicePixelRatio: 3.25),
     );
     _updateSourceStream(newStream);
   }
@@ -181,6 +183,7 @@ class _ImageWrapperState extends State<ImageWrapper> {
       widget.initialScale ?? PhotoViewComputedScale.contained,
       widget.outerSize,
       _imageSize!,
+      MediaQuery.of(context).devicePixelRatio,
     );
 
     return PhotoViewCore(
@@ -204,6 +207,7 @@ class _ImageWrapperState extends State<ImageWrapper> {
       filterQuality: widget.filterQuality ?? FilterQuality.none,
       disableGestures: widget.disableGestures ?? false,
       enablePanAlways: widget.enablePanAlways ?? false,
+      placeholderBuilder: widget.placeholderBuilder,
     );
   }
 
@@ -255,6 +259,7 @@ class CustomChildWrapper extends StatelessWidget {
     required this.disableGestures,
     required this.enablePanAlways,
     required this.strictScale,
+    required this.placeholderBuilder,
   }) : super(key: key);
 
   final Widget? child;
@@ -284,6 +289,8 @@ class CustomChildWrapper extends StatelessWidget {
   final bool? enablePanAlways;
   final bool? strictScale;
 
+  final WidgetBuilder? placeholderBuilder;
+
   @override
   Widget build(BuildContext context) {
     final scaleBoundaries = ScaleBoundaries(
@@ -292,6 +299,7 @@ class CustomChildWrapper extends StatelessWidget {
       initialScale ?? PhotoViewComputedScale.contained,
       outerSize,
       childSize ?? outerSize,
+      MediaQuery.of(context).devicePixelRatio,
     );
 
     return PhotoViewCore.customChild(
@@ -313,6 +321,7 @@ class CustomChildWrapper extends StatelessWidget {
       filterQuality: filterQuality ?? FilterQuality.none,
       disableGestures: disableGestures ?? false,
       enablePanAlways: enablePanAlways ?? false,
+      placeholderBuilder: placeholderBuilder,
     );
   }
 }
