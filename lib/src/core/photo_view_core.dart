@@ -336,9 +336,6 @@ class PhotoViewCoreState extends State<PhotoViewCore>
               );
               controller.position = offset;
             }
-            debugPrint(
-              'PhotoViewCore.build: ${scaleBoundaries.childSize.height}, ${scaleBoundaries.outerSize.height}',
-            );
             final computedScale = useImageScale ? 1.0 : scale;
             final matrix = Matrix4.identity()
               ..translate(value.position.dx, value.position.dy)
